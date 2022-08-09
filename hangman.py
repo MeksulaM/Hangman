@@ -6,7 +6,9 @@ def hangman(word: str):
     """Function that handles main logic of program"""
 
     # creating list with single letters
-    word_list, guesses = create_lists(word)
+    word_list, guesses, wrong_letters = create_lists(word)
+
+    # user has 'tries_left' tries to guess all letters
     tries_left = 6
 
     while True:
@@ -19,29 +21,29 @@ def hangman(word: str):
 
         # creating copy of guesses list for scoring purpose
         guesses_copy = guesses[:]
-        # print(f'Tries left: {tries_left}')
+
+        # print hangman ascii
         display_hangman(tries_left)
 
         # breaking the loop if no more tries are left
-        if tries_left == 0:
-            print('Game over mate')
+        if game_over(tries_left, word_list):
             break
 
         # printing guessing progress
         display_guesses(guesses)
-
+        
+        # printing wrong letters
+        display_wrong_letters(wrong_letters)
+        
         # breaking the loop when user guess all letters
-        if guesses == word_list:
-            print('Congrats mate')
+        if word_is_guessed(guesses, word_list):
             break
 
         # asking user for guess, then checking if guess is correct
-        check_guess(word_list, guesses)
+        check_guess(word_list, guesses, wrong_letters)
 
-        # if copy of guesses and guesses are equal
-        # that means user didn't get letter right
-        if guesses_copy == guesses:
-            tries_left -= 1
+        # check if tries_left have to be updated
+        tries_left = update_tries_left(tries_left, guesses_copy, guesses)
 
 
 def create_lists(word: str):
@@ -53,8 +55,11 @@ def create_lists(word: str):
     
     # a list where correct guesses will be stored
     guesses = [' ' for letter in word]
+    
+    # a list whrere wrong letters will be stored
+    wrong_lett = list()
 
-    return word_list, guesses
+    return word_list, guesses, wrong_lett
 
 
 def display_guesses(guesses: list):
@@ -66,19 +71,91 @@ def display_guesses(guesses: list):
     print('^ ' * len(guesses))
     
 
-def check_guess(word_list: list, guesses: list):
+def check_guess(word_list: list, guesses: list, wrong_letters: list):
     """Function that asks user for guess, 
     then checks if guess is correct"""
     
-    guess = input('Type your guess: ')
+    guess = user_input_validation()
     for index, letter in enumerate(word_list):
         if guess == letter:
             guesses[index] = guess
+    
+    add_wrong_letter_to_list(word_list, guess, wrong_letters)
+
+
+def user_input_validation():
+    """Function that checks if user input is valid"""
+
+    #     
+    letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    guess = input('\nType your guess: ').upper()
+    
+    # making sure user inputs single letter
+    if len(guess) != 1:
+        print('Wrong input mate')
+        return user_input_validation()
+
+    # making sure user inputs letter'
+    if guess not in letters:
+        print('Wrong input mate')
+        return user_input_validation()
+    
+    return guess
+
+
+def add_wrong_letter_to_list(word_list: list, guess: str, wrong_letters: list):
+    """Function that adds wrong letter to wrong letters list"""
+    
+    if guess not in word_list and guess not in wrong_letters:
+        wrong_letters.append(guess)
+
+
+def display_wrong_letters(wrong_letters: list):
+    """Function that prints wrong letters"""
+
+    if wrong_letters:
+        print('\nWrong letters:')
+        for letter in wrong_letters:
+            print(letter, end=' ')
+        print()
+
+def game_over(tries_left: int, word_list: list):
+    """Function that prints game over message and will break the loop"""
+
+    if tries_left == 0:
+        display_guesses(word_list)
+        print('\nGame over mate')
+        return True
+    else:
+        return False
+
+
+def word_is_guessed(guesses: list, word_list: list):
+    """Function that checks if user guessed all letters
+        If yes, function will break the loop"""
+
+    if guesses == word_list:
+        print('\nCongrats mate')
+        return True
+    else:
+        return False
+
+
+def update_tries_left(tries_left: int, guesses_copy: list, guesses: list):
+    """Function that updates tries left if user guess was wrong"""
+
+    # if copy of guesses and guesses are equal
+    # that means user didn't get letter right
+    if guesses_copy == guesses:
+        tries_left -= 1
+    
+    return tries_left
 
 
 def display_banner():
     """Function that prints game logo"""
 
+    # ascii art
     banner = """
     
  ██░ ██ ▄▄▄      ███▄    █  ▄████ ███▄ ▄███▓▄▄▄      ███▄    █ 
@@ -98,18 +175,19 @@ def display_banner():
 def display_hangman(tries_left):
     """Function that prints hangman string corresponding to the tries left"""
 
-    hangman = [
-        "  +---+\n  |   |\n      |\n      |\n      |\n      |\n=========", 
-        "  +---+\n  |   |\n  O   |\n      |\n      |\n      |\n=========",
-        "  +---+\n  |   |\n  O   |\n  |   |\n      |\n      |\n=========",
-        "  +---+\n  |   |\n  O   |\n /|   |\n      |\n      |\n=========", 
-        "  +---+\n  |   |\n  O   |\n /|\  |\n      |\n      |\n=========",
-        "  +---+\n  |   |\n  O   |\n /|\  |\n /    |\n      |\n=========",
-        "  +---+\n  |   |\n  O   |\n /|\  |\n / \  |\n      |\n=========",
+    # ascii hangman art
+    hangman_strings = [
+        "  +---+\n  |   |\n      |\n      |\n      |\n      |\n=========\n", 
+        "  +---+\n  |   |\n  O   |\n      |\n      |\n      |\n=========\n",
+        "  +---+\n  |   |\n  O   |\n  |   |\n      |\n      |\n=========\n",
+        "  +---+\n  |   |\n  O   |\n /|   |\n      |\n      |\n=========\n", 
+        "  +---+\n  |   |\n  O   |\n /|\  |\n      |\n      |\n=========\n",
+        "  +---+\n  |   |\n  O   |\n /|\  |\n /    |\n      |\n=========\n",
+        "  +---+\n  |   |\n  O   |\n /|\  |\n / \  |\n      |\n=========\n",
     ]
     
-    index = len(hangman) - tries_left - 1
-    print(hangman[index])
+    index = len(hangman_strings) - tries_left - 1
+    print(hangman_strings[index])
 
 
 def clear_console():
